@@ -1,26 +1,27 @@
 # Lei's Scripts
+## Streamline
+An autopilot system for Space Engineers.
 
+Requires:
+- 1x Programmable Block named whatever you want.
+- 1x Inset Button Panel named `[AP] Inset Button Panel`
+- 1x Sci-fi Button Panel named `[AP] Sci-Fi Four-Button Panel`
 
+### Button Setup
+You must setup the buttons to run the programmable block with these arguments.
+#### Inset Button Panel:
+- input_event sb1
+- input_event sb2
+- input_event sb3
+#### Sci-fi Button Panel:
+- input_event bb1
+- input_event bb2
+- input_event bb3
+- input_event bb4
 
-get the direction of gravity
-get the direction of the ships forward
-get vector right vector of ship that is 90*
+### Running the program
+Load into the programmable block and power on.
 
-
-
-
-
-
-get ships up vector in world matrix
-
-
-Gravity: (0.577558103921054,0.573438250604059,0.581029439305165)
-Ship Forward: (0.814839839935303,-0.412915825843811,-0.406861841678619)
-Ship Up: (-0.574872851371765,-0.485339283943176,-0.658761739730835)
-
-
-
-TODO fix heading from going above 359 it should loop around instead
-
-need to find a way to allow player to control inertial dampener controls
-thruster overrides need to be turned off when nothing is active that uses it
+The inset button panel controls are listed on the bottom of the display.
+## Other Projects
+There are a lot of non-functional script projects in this repository. As they become mature sections will be added to the readme.

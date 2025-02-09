@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using VRage;
@@ -27,9 +28,7 @@ namespace IngameScript
         private const string ShipControllerBlockName = "[AP] Remote Control";
         private const string MenuDisplayBlockName = "[AP] Inset Button Panel";
         private const string ButtonBarBlockName = "[AP] Sci-Fi Four-Button Panel";
-
-        private static string APBlockName = "[AP] Autopilot";
-        private IMyProgrammableBlock _apBlock;
+        
 
 
         private Autopilot _autopilot;
@@ -39,17 +38,12 @@ namespace IngameScript
 
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update100;
+            Runtime.UpdateFrequency = UpdateFrequency.Update1;
 
             _autopilot = GetAutopilot(ShipControllerBlockName);
             _displayController = GetDisplayController(MenuDisplayBlockName);
             _buttonBar = GetButtonBar(ButtonBarBlockName);
-            _autopilotMainControl = new AutopilotMainControl(_displayController, _buttonBar);
-            _apBlock = GridTerminalSystem.GetBlockWithName(APBlockName) as IMyProgrammableBlock;
-            if (_apBlock == null)
-            {
-                throw new NullReferenceException("Init: Could not find an Autopilot block");
-            }
+            _autopilotMainControl = new AutopilotMainControl(_autopilot, _displayController, _buttonBar);
         }
 
         public void Save()
@@ -75,8 +69,9 @@ namespace IngameScript
             // can be removed if not needed.
             try
             {
-                if (((UpdateType)((uint)UpdateType.Update100 & (uint)updateSource) == UpdateType.Update100))
+                if (((UpdateType)((uint)UpdateType.Update1 & (uint)updateSource) == UpdateType.Update1))
                 {
+                    _autopilot.Update(Runtime.LastRunTimeMs);
                     _autopilotMainControl.RefreshDisplay();
                     // Could possibly cause display to refresh twice if there is also an argument
                 }
@@ -98,14 +93,9 @@ namespace IngameScript
                             throw new ArgumentException("Invalid button type");
                         }
 
-                        Me.CustomData = $"{Me.CustomData}\nType: {buttonType} AP Status: {_autopilot.ToggleAP}";
+                        Me.CustomData = $"{Me.CustomData}\nType: {buttonType} AP Status: {_autopilot.AutopilotEnabled}";
                         Echo($"Input event: {buttonType}");
                         _autopilotMainControl.HandleInput(buttonType);
-                    }
-                    else if (arguments[0] == "APDATA")
-                    {
-                        Echo(argument.Length.ToString()); // arugment length
-                        ProcessAutopilotData(argument.Substring(arguments[0].Length));
                     }
                 }
             }
@@ -113,7 +103,7 @@ namespace IngameScript
             {
                 Echo("Exception occured. See CustomData.");
                 Me.CustomData = ex.ToString();
-                _autopilot.ToggleAP = false;
+                _autopilot.AutopilotEnabled = false;
             }
         }
 
@@ -159,12 +149,6 @@ namespace IngameScript
 
             ButtonBar buttonBar = new ButtonBar(textSurfaceProvider);
             return buttonBar;
-        }
-
-        private void ProcessAutopilotData(string serializedData)
-        {
-            AutopilotData apData = AutopilotData.ParseAutopilotData(serializedData, _apBlock);
-            _autopilotMainControl.RefreshDisplayWithNewAPData(apData);
         }
     }
 }

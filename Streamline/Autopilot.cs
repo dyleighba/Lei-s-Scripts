@@ -23,289 +23,172 @@ namespace IngameScript
 {
     public class Autopilot
     {
-        public enum APModule
+        public enum Module
         {
-            ALT,
-            HDG,
-            SPD,
-            VS,
+            Altitude,
+            Heading,
+            Speed,
+            VerticalSpeed,
             None
         }
-        
+
         private readonly IMyShipController _shipController;
-        
-        public bool ToggleAP;
-        public bool ToggleALT;
-        public bool ToggleVS;
-        public bool ToggleHDG;
-        public bool ToggleSPD;
-        
-        public float TargetALT;
-        public float TargetVS;
-        public float TargetHDG;
-        public float TargetSPD;
+        private readonly AutopilotOperations _autopilotOperations;
+
+        public bool AutopilotEnabled;
+        public bool AltitudeEnabled;
+        public bool VerticalSpeedEnabled;
+        public bool HeadingEnabled;
+        public bool SpeedEnabled;
+
+        public double AltitudeTarget;
+        public double VerticalSpeedTarget;
+        public double HeadingTarget;
+        public double SpeedTarget;
 
         public Autopilot(IMyShipController shipController)
         {
             _shipController = shipController;
+            _autopilotOperations = new AutopilotOperations(this);
         }
-        
-        public bool GetToggle(APModule apModule)
+
+        public bool GetModuleState(Module module)
         {
-            switch (apModule)
+            switch (module)
             {
-                case APModule.ALT:
-                    return ToggleALT;
-                case APModule.HDG:
-                    return ToggleHDG;
-                case APModule.SPD:
-                    return ToggleSPD;
-                case APModule.VS:
-                    return ToggleVS;
-                default:
-                    throw new Exception("Unknown AP Module");
-            }
-        }
-        
-        public float GetCurrent(APModule apModule)
-        {
-            switch (apModule)
-            {
-                case APModule.ALT:
-                    return CurrentALT;
-                case APModule.HDG:
-                    return CurrentHDG;
-                case APModule.SPD:
-                    return CurrentSPD;
-                case APModule.VS:
-                    return CurrentVS;
-                default:
-                    throw new Exception("Unknown AP Module");
-            }
-        }
-        
-        public float GetTarget(APModule apModule)
-        {
-            switch (apModule)
-            {
-                case APModule.ALT:
-                    return TargetALT;
-                case APModule.HDG:
-                    return TargetHDG;
-                case APModule.SPD:
-                    return TargetSPD;
-                case APModule.VS:
-                    return TargetVS;
-                default:
-                    throw new Exception("Unknown AP Module");
-            }
-        }
-        
-        public float GetError(APModule apModule)
-        {
-            switch (apModule)
-            {
-                case APModule.ALT:
-                    return ErrorALT;
-                case APModule.HDG:
-                    return ErrorHDG;
-                case APModule.SPD:
-                    return ErrorSPD;
-                case APModule.VS:
-                    return ErrorVS;
-                default:
-                    throw new Exception("Unknown AP Module");
-            }
-        }
-        
-        public void ToggleModule(APModule apModule)
-        {
-            switch (apModule)
-            {
-                case APModule.ALT:
-                    ToggleALT = !ToggleALT;
-                    break;
-                case APModule.HDG:
-                    ToggleHDG = !ToggleHDG;
-                    break;
-                case APModule.SPD:
-                    ToggleSPD  = !ToggleSPD;
-                    break;
-                case APModule.VS:
-                    ToggleVS = !ToggleVS;
-                    break;
-                default:
-                    throw new Exception("Unknown AP Module");
-            }
-        }
-        
-        public void SetTarget(APModule apModule, float target)
-        {
-            switch (apModule)
-            {
-                case APModule.ALT:
-                    TargetALT = target;
-                    break;
-                case APModule.HDG:
-                    TargetHDG = target;
-                    break;
-                case APModule.SPD:
-                    TargetSPD = target;
-                    break;
-                case APModule.VS:
-                    TargetVS = target;
-                    break;
-                default:
-                    throw new Exception("Unknown AP Module");
+                case Module.Altitude: return AltitudeEnabled;
+                case Module.Heading: return HeadingEnabled;
+                case Module.Speed: return SpeedEnabled;
+                case Module.VerticalSpeed: return VerticalSpeedEnabled;
+                default: throw new Exception("Unknown Autopilot Module");
             }
         }
 
-        public float CurrentALT
+        public double GetCurrentValue(Module module)
+        {
+            switch (module)
+            {
+                case Module.Altitude: return CurrentAltitude;
+                case Module.Heading: return CurrentHeading;
+                case Module.Speed: return CurrentSpeed;
+                case Module.VerticalSpeed: return CurrentVerticalSpeed;
+                default: throw new Exception("Unknown Autopilot Module");
+            }
+        }
+
+        public double GetTarget(Module module)
+        {
+            switch (module)
+            {
+                case Module.Altitude: return AltitudeTarget;
+                case Module.Heading: return HeadingTarget;
+                case Module.Speed: return SpeedTarget;
+                case Module.VerticalSpeed: return VerticalSpeedTarget;
+                default: throw new Exception("Unknown Autopilot Module");
+            }
+        }
+
+        public double GetError(Module module)
+        {
+            switch (module)
+            {
+                case Module.Altitude: return AltitudeError;
+                case Module.Heading: return HeadingError;
+                case Module.Speed: return SpeedError;
+                case Module.VerticalSpeed: return VerticalSpeedError;
+                default: throw new Exception("Unknown Autopilot Module");
+            }
+        }
+
+        public void ToggleModule(Module module)
+        {
+            switch (module)
+            {
+                case Module.Altitude:
+                    AltitudeEnabled = !AltitudeEnabled;
+                    break;
+                case Module.Heading:
+                    HeadingEnabled = !HeadingEnabled;
+                    break;
+                case Module.Speed:
+                    SpeedEnabled = !SpeedEnabled;
+                    break;
+                case Module.VerticalSpeed:
+                    VerticalSpeedEnabled = !VerticalSpeedEnabled;
+                    break;
+                default:
+                    throw new Exception("Unknown Autopilot Module");
+            }
+        }
+
+        public void SetTarget(Module module, double target)
+        {
+            switch (module)
+            {
+                case Module.Altitude:
+                    AltitudeTarget = target;
+                    break;
+                case Module.Heading:
+                    HeadingTarget = target;
+                    break;
+                case Module.Speed:
+                    SpeedTarget = target;
+                    break;
+                case Module.VerticalSpeed:
+                    VerticalSpeedTarget = target;
+                    break;
+                default:
+                    throw new Exception("Unknown Autopilot Module");
+            }
+        }
+
+        public double CurrentAltitude {
+            get
+            {
+                double altitude;
+                if (_shipController.TryGetPlanetElevation(MyPlanetElevation.Sealevel, out altitude))
+                {
+                    return altitude;
+                }
+                return -1;
+            }
+        }
+    
+        public double CurrentVerticalSpeed => -Vector3D.Dot(_shipController.GetShipVelocities().LinearVelocity, Vector3D.Normalize(_shipController.GetNaturalGravity()));
+        public double CurrentSpeed => _shipController.GetShipVelocities().LinearVelocity.Length();
+        
+        public double CurrentHeading
         {
             get
             {
-                // TODO Return actual altitude
-                MyPlanetElevation elevationType = MyPlanetElevation.Sealevel;
-                double result;
-                double altitude = _shipController.GetNaturalGravity().LengthSquared() > 0 
-                    ? _shipController.TryGetPlanetElevation(elevationType, out result) ? result : -1 
-                    : -1;
-                return (float) altitude;
-            }
-        }
-        
-        private float GetAngleBetweenVectors(Vector3D vecA, Vector3D vecB)
-        {
-            vecA = Vector3D.Normalize(vecA); // Normalize to get only direction
-            vecB = Vector3D.Normalize(vecB);
-
-            double dotProduct = Vector3D.Dot(vecA, vecB);
-            double angleRad = Math.Acos(MathHelper.Clamp(dotProduct, -1.0, 1.0)); // Prevent NaN errors from precision issues
-            double angleDeg = MathHelper.ToDegrees(angleRad); // Convert to degrees
-
-            return (float) angleDeg;
-        }
-        
-        public float CurrentVS
-        {
-            get
-            {
-                // Get the gravity direction (normalized)
                 Vector3D gravity = _shipController.GetNaturalGravity();
-                if (gravity.LengthSquared() == 0) 
-                    return 0; // No gravity present
-
+                if (gravity.LengthSquared() == 0) return -1;
+                
                 gravity = Vector3D.Normalize(gravity);
-
-                // Get the velocity of the craft
-                Vector3D velocity = _shipController.GetShipVelocities().LinearVelocity;
-
-                // Project velocity onto gravity vector to get the vertical component
-                double verticalVelocity = -Vector3D.Dot(velocity, gravity);
-
-                return (float) verticalVelocity; // Positive if ascending, negative if descending
-            }
-        }
-
-        public float CurrentHDG
-        {
-            get
-            {
-                // TODO fix slight offset to the right
-                // Get the gravity direction (normalized)
-                Vector3D gravity = _shipController.GetNaturalGravity();
-                if (gravity.LengthSquared() == 0) 
-                    return -1; // Not in a gravity well
-
-                gravity = Vector3D.Normalize(gravity);
-
-                // Get the ship's forward direction
                 Vector3D forward = _shipController.WorldMatrix.Forward;
-
-                // Compute the East vector (perpendicular to gravity and world 'Up')
                 Vector3D planetEast = Vector3D.Normalize(Vector3D.Cross(Vector3D.Up, gravity));
-
-                // Compute the North vector (flipped order to correct direction)
                 Vector3D planetNorth = Vector3D.Normalize(Vector3D.Cross(gravity, planetEast));
-
-                // Project the forward vector onto the planet’s surface
                 Vector3D projectedForward = Vector3D.Normalize(Vector3D.Reject(forward, gravity));
-
-                // Compute the heading angle relative to north
+                
                 double headingRad = Math.Acos(MathHelper.Clamp(Vector3D.Dot(projectedForward, planetNorth), -1.0, 1.0));
                 double headingDeg = MathHelper.ToDegrees(headingRad);
-
-                // Correct the direction (ensure left decreases, right increases)
                 if (Vector3D.Dot(projectedForward, planetEast) > 0)
                     headingDeg = 360 - headingDeg;
-                float finalHeading = (float)(headingDeg - 180) % 360;
-                if (finalHeading < 0)
-                {
-                    finalHeading = 360 + finalHeading;
-                }
-                return finalHeading;
-            }
-        }
-
-        public float CurrentSPD
-        {
-            get
-            {
-                return (float) _shipController.GetShipVelocities().LinearVelocity.Length();
+                
+                return ((headingDeg - 180) % 360 + 360) % 360;
             }
         }
         
-        public float ErrorALT
-        {
-            get
-            {
-                return CurrentALT - TargetALT;
-            }
-        }
+        public double AltitudeError => CurrentAltitude - AltitudeTarget;
+        public double HeadingError => (CurrentHeading - HeadingTarget + 180) % 360 - 180;
+        public double SpeedError => CurrentSpeed - SpeedTarget;
+        public double VerticalSpeedError => CurrentVerticalSpeed - VerticalSpeedTarget;
         
-        public float ErrorHDG
-        {
-            get
-            {
-                float currentError = CurrentHDG - TargetHDG;
-                if (currentError > 180)
-                {
-                    currentError -= 360;
-                }
-                return currentError;
-            }
-        }
+        public double CurrentPitch => -1;
+        public double CurrentRoll => -1;
         
-        public float ErrorSPD
-        {
-            get
-            {
-                return CurrentSPD - TargetSPD;
-            }
-        }
         
-        public float ErrorVS
-        {
-            get
-            {
-                return CurrentVS - TargetVS;
-            }
-        }
-        
-        public float CurrentPTH // Error == Current as target is always 0 == level
-        {
-            get
-            {
-                return -42;
-            }
-        }
-        
-        public float CurrentROL // Error == Current as target is always 0 == level
-        {
-            get
-            {
-                return 0;
-            }
-        }
+        // Autopilot operations
+        public void Update(double deltaTime) => _autopilotOperations.Update(deltaTime);
     }
 }

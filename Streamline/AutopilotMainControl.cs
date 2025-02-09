@@ -288,7 +288,7 @@ namespace IngameScript
                 altitudeError = Math.Round(_autopilot.AltitudeError).ToString()
                     .PadLeft(6);
 
-            string headingReal = (Math.Round(_autopilot.CurrentHeading)).ToString().PadLeft(3);
+            string headingReal = (Math.Round(_autopilot.CurrentHeading+0.2f)).ToString().PadLeft(3);
             string headingTarget = _autopilot.HeadingTarget.ToString().PadLeft(5);
             string headingError = "N/A".PadLeft(6);
             if (_autopilot.HeadingEnabled)
@@ -309,8 +309,12 @@ namespace IngameScript
                 vSpeedError = Math.Round(_autopilot.VerticalSpeedError).ToString()
                     .PadLeft(6);
 
-            string pitchReal = Math.Round(_autopilot.CurrentPitch).ToString().PadLeft(4);
-            string rollReal = Math.Round(_autopilot.CurrentRoll).ToString().PadLeft(4);
+            string pitchReal = Math.Round(_autopilot.CurrentPitch, 1).ToString();
+            string rollReal = Math.Round(_autopilot.CurrentRoll, 1).ToString();
+            if (!pitchReal.Contains('.')) pitchReal += ".0";
+            if (!rollReal.Contains('.')) rollReal += ".0";
+            pitchReal = pitchReal.PadLeft(5);
+            rollReal = rollReal.PadLeft(5);
             
             _display.SeekLine(2);
             _display.WriteLine("      Real  Error  Goal");

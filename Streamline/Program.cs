@@ -20,6 +20,7 @@ using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
 using IMyTextSurface = Sandbox.ModAPI.Ingame.IMyTextSurface;
+using IMyThrust = Sandbox.ModAPI.Ingame.IMyThrust;
 
 namespace IngameScript
 {
@@ -41,6 +42,7 @@ namespace IngameScript
             Runtime.UpdateFrequency = UpdateFrequency.Update1;
 
             _autopilot = GetAutopilot(ShipControllerBlockName);
+            _autopilot.AutopilotEnabled = true;
             _displayController = GetDisplayController(MenuDisplayBlockName);
             _buttonBar = GetButtonBar(ButtonBarBlockName);
             _autopilotMainControl = new AutopilotMainControl(_autopilot, _displayController, _buttonBar);
@@ -114,8 +116,13 @@ namespace IngameScript
             {
                 throw new Exception("GetAutopilot: received null block");
             }
-
-            Autopilot ap = new Autopilot(shipController);
+            List<IMyThrust> thrusters = new List<IMyThrust>();
+            List<IMyGyro> gyros = new List<IMyGyro>();
+            GridTerminalSystem.GetBlocksOfType<IMyThrust>(thrusters);
+            GridTerminalSystem.GetBlocksOfType<IMyGyro>(gyros);
+            
+            
+            Autopilot ap = new Autopilot(shipController, thrusters, gyros);
             return ap;
         }
 

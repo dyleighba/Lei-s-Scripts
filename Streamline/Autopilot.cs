@@ -44,12 +44,12 @@ namespace IngameScript
         public double AltitudeTarget;
         public double VerticalSpeedTarget;
         public double HeadingTarget;
-        public double SpeedTarget;
+        public double SpeedTarget; // todo make horizontal speed
 
-        public Autopilot(IMyShipController shipController)
+        public Autopilot(IMyShipController shipController, List<IMyThrust> thrusters, List<IMyGyro> gyros)
         {
             _shipController = shipController;
-            _autopilotOperations = new AutopilotOperations(this);
+            _autopilotOperations = new AutopilotOperations(this, thrusters, gyros);
         }
 
         public bool GetModuleState(Module module)
@@ -173,22 +173,83 @@ namespace IngameScript
                 double headingRad = Math.Acos(MathHelper.Clamp(Vector3D.Dot(projectedForward, planetNorth), -1.0, 1.0));
                 double headingDeg = MathHelper.ToDegrees(headingRad);
                 if (Vector3D.Dot(projectedForward, planetEast) > 0)
-                    headingDeg = 360 - headingDeg;
+                    headingDeg = 359 - headingDeg;
                 
-                return ((headingDeg - 180) % 360 + 360) % 360;
+                return ((headingDeg - 179) % 359 + 359) % 359;
             }
         }
         
         public double AltitudeError => CurrentAltitude - AltitudeTarget;
-        public double HeadingError => (CurrentHeading - HeadingTarget + 180) % 360 - 180;
+        public double HeadingError => (CurrentHeading - HeadingTarget + 179) % 359 - 179;
         public double SpeedError => CurrentSpeed - SpeedTarget;
         public double VerticalSpeedError => CurrentVerticalSpeed - VerticalSpeedTarget;
-        
-        public double CurrentPitch => -1;
-        public double CurrentRoll => -1;
+
+        public double CurrentPitch
+        {
+            get
+            {
+                Vector3D gravity = _shipController.GetNaturalGravity();
+                if (gravity.LengthSquared() < 1e-6) // Prevent division by zero if no gravity
+                    return 0;
+                gravity.Normalize();
+
+                Vector3D shipForward = _shipController.WorldMatrix.Forward;
+    
+                // Get the pitch angle by projecting the ship's forward vector onto the gravity plane
+                double pitch = Math.Asin(MathHelper.Clamp(Vector3D.Dot(shipForward, gravity), -1.0, 1.0));
+    
+                return -MathHelper.ToDegrees(pitch); // Convert to degrees for easier use
+            }
+        }
+
+        public double CurrentRoll
+        {
+            get
+            {
+                Vector3D gravity = _shipController.GetNaturalGravity();
+                if (gravity.LengthSquared() < 1e-6) // Prevent division by zero if no gravity
+                    return 0;
+                gravity.Normalize();
+
+                Vector3D shipRight = _shipController.WorldMatrix.Right;
+                Vector3D shipUp = _shipController.WorldMatrix.Up;
+    
+                // Get the roll angle by projecting the ship's right vector onto the gravity plane
+                double roll = Math.Asin(MathHelper.Clamp(Vector3D.Dot(shipRight, gravity), -1.0, 1.0));
+    
+                return -MathHelper.ToDegrees(roll); // Convert to degrees for easier use
+            }
+        }
+
+        public Vector3D Gravity
+        {
+            get
+            {
+                return _shipController.GetNaturalGravity().Normalized();
+            }
+        }
+
+        public bool DampenersOverride
+        {
+            get
+            {
+                return _shipController.DampenersOverride;
+            }
+            set
+            {
+                _shipController.DampenersOverride = value;
+            }
+        }
         
         
         // Autopilot operations
-        public void Update(double deltaTime) => _autopilotOperations.Update(deltaTime);
+        public void Update(double deltaTime)
+        {
+            _autopilotOperations.Update(deltaTime);
+            if (AutopilotEnabled)
+            {
+                DampenersOverride = true;
+            }
+        }
     }
 }

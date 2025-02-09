@@ -23,24 +23,28 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
         // Constants for block group and block names
-        const string SiloWelderprefix = "Silo Welder";
-        const string SiloPistonPrefix = "Silo Piston";
-        const string SiloMergeBlockName = "Silo Merge Block";
-        const string SiloProjectorBlockName = "Silo Projector";
-        const string GuidanceProgrammableBlockName = "Ion Torpedo Guidance";
-        private const float PistonSpeed = 3f;
         
         // Block references
-        List<IMyShipWelder> _welders = new List<IMyShipWelder>();
-        List<IMyPistonBase> _pistons = new List<IMyPistonBase>();
-        IMyShipMergeBlock _mergeBlock;
-        IMyTextSurface _textPanel; // Changed to IMyTextSurface for accessing text panel surfaces
-        IMyProjector _projector;
-
+        IMyTextSurface _textSurface;
+        
+        IMyShipController _shipController;
+        
         public Program()
         {
-            InitializeBlocks();
-            Log("Program initialized");
+            _shipController = GridTerminalSystem.GetBlockWithName("[AP] Remote Control") as IMyShipController;
+            if (_shipController == null)
+            {
+                LogError("_shipController was null");
+            }
+            _textSurface = Me.GetSurface(0);
+            if (_textSurface == null)
+            {
+                LogError("_textSurface was null");
+            }
+            _textSurface.Font = "Monospace";
+            
+            _textSurface.ContentType = ContentType.TEXT_AND_IMAGE;
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
             // The constructor, called only once every session and
             // always before any other method is called. Use it to
             // initialize your script. 
@@ -74,78 +78,13 @@ namespace IngameScript
             // 
             // The method itself is required, but the arguments above
             // can be removed if not needed.
-        }
-        
-        void InitializeBlocks()
-        {
-            List<IMyTerminalBlock> allBlocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlocks(allBlocks);
-
-            foreach (IMyTerminalBlock block in allBlocks)
-            {
-                /*if (block.CustomName.Length > 0)
-                {
-                    Log($"Block: {block.CustomName}");
-                }*/
-                
-                if (block.CustomName.StartsWith(SiloWelderprefix))
-                {
-                    _welders.Add(block as IMyShipWelder);
-                    Log("Found Silo Welder");
-                }
-                else if (block.CustomName.StartsWith(SiloPistonPrefix))
-                {
-                    _pistons.Add(block as IMyPistonBase);
-                    Log("Found Silo Piston");
-                }
-                else if (block.CustomName.StartsWith(SiloMergeBlockName))
-                {
-                    _mergeBlock = (block as IMyShipMergeBlock);
-                    Log("Found Silo Merge Block");
-                }
-                else if (block.CustomName.StartsWith(SiloProjectorBlockName))
-                {
-                    _projector = (block as IMyProjector);
-                    Log("Found Silo Projector");
-                }
-            }
-            
-            _textPanel = Me.GetSurface(0) as IMyTextSurface; // Changed to access the text surface of the programmable block
-
-
-            if (_welders == null)
-            {
-                Log("Error: Silo Welders group not found.");
-            }
-            if (_pistons == null)
-            {
-                Log("Error: Silo Pistons group not found.");
-            }
-            if (_mergeBlock == null)
-            {
-                Log("Error: Silo Merge Block not found.");
-                Log($"Merge Dbg: {_mergeBlock.CustomName}");
-            }
-            if (_textPanel == null)
-            {
-                Log("Error: Text Panel not found.");
-            }
-            if (_projector == null)
-            {
-                Log("Error: Projector not found.");
-            }
-
-            Log($"{_textPanel != null}");
-            if (_textPanel != null)
-            {
-                _textPanel.ContentType = ContentType.TEXT_AND_IMAGE;
-                _textPanel.WriteText("SE Test");
-            }
-
-            if (_welders == null || _pistons == null || _mergeBlock == null || _textPanel == null)
-            {
-                Log("Initialization failed. Fix block references.");
-            }
+            Log("Starting program");
+            Me.CustomData = "";
+            Vector3D gravity = _shipController.GetNaturalGravity().Normalized();
+            Vector3D shipForward = _shipController.WorldMatrix.Forward;
+            Vector3D shipUp = _shipController.WorldMatrix.Up;
+            _textSurface.WriteText($"Gravity: {gravity}\nShip Forward: {shipForward}\nShip Up: {shipUp}");
+            Log($"Gravity: {gravity}\nShip Forward: {shipForward}\nShip Up: {shipUp}");
         }
         
         void Log(string message)
@@ -154,6 +93,12 @@ namespace IngameScript
             string formattedMessage = $"{Me.CustomData}{currentTime}: {message}\n";
             Me.CustomData = formattedMessage;
             Echo(formattedMessage);
+        }
+        
+        void LogError(string message)
+        {
+            Log(message);
+            throw new Exception(message);
         }
     }
 }

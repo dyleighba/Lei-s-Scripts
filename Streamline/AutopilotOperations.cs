@@ -180,12 +180,13 @@ namespace IngameScript
             if (_autopilot.VerticalSpeedTarget < 0) return;
             double correction = _altitudeController.Compute(0, -_autopilot.AltitudeError, deltaTime);
             double slowDownDistance = (Math.Abs(_autopilot.CurrentVerticalSpeed) / 30) * 100; // Missile barge quick fix
-            if (_autopilot.AltitudeError < slowDownDistance && _autopilot.AltitudeError > 50 && _autopilot.CurrentVerticalSpeed < 0)
+            double realVerticalSpeedTarget = _autopilot.VerticalSpeedTarget;
+            if (Math.Abs(_autopilot.AltitudeError) < slowDownDistance)
             {
-                correction =  1;
+                realVerticalSpeedTarget = Math.Min(10.0f, realVerticalSpeedTarget);
             }
             // do thruster stuff
-            double derivedTarget = _autopilot.VerticalSpeedTarget * Math.Max(-1, Math.Min(1, correction));
+            double derivedTarget = realVerticalSpeedTarget * Math.Max(-1, Math.Min(1, correction));
             _derivedVerticalSpeedTarget = derivedTarget;
         }
 

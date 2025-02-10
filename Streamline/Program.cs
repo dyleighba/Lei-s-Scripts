@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Json;
 using System.Text;
 using VRage;
@@ -19,6 +20,7 @@ using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
 using IMyTextSurface = Sandbox.ModAPI.Ingame.IMyTextSurface;
+using IMyThrust = Sandbox.ModAPI.Ingame.IMyThrust;
 
 namespace IngameScript
 {
@@ -27,9 +29,7 @@ namespace IngameScript
         private const string ShipControllerBlockName = "[AP] Remote Control";
         private const string MenuDisplayBlockName = "[AP] Inset Button Panel";
         private const string ButtonBarBlockName = "[AP] Sci-Fi Four-Button Panel";
-
-        private static string APBlockName = "[AP] Autopilot";
-        private IMyProgrammableBlock _apBlock;
+        
 
 
         private Autopilot _autopilot;
@@ -39,17 +39,15 @@ namespace IngameScript
 
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update100;
+            Runtime.UpdateFrequency = UpdateFrequency.Update1;
 
             _autopilot = GetAutopilot(ShipControllerBlockName);
+            _autopilot.AutopilotEnabled = true;
             _displayController = GetDisplayController(MenuDisplayBlockName);
             _buttonBar = GetButtonBar(ButtonBarBlockName);
-            _autopilotMainControl = new AutopilotMainControl(_displayController, _buttonBar);
-            _apBlock = GridTerminalSystem.GetBlockWithName(APBlockName) as IMyProgrammableBlock;
-            if (_apBlock == null)
-            {
-                throw new NullReferenceException("Init: Could not find an Autopilot block");
-            }
+            _autopilotMainControl = new AutopilotMainControl(_autopilot, _displayController, _buttonBar);
+            
+            PrintToBuiltinDisplay("Streamline\n\n", false);
         }
 
         public void Save()
@@ -75,8 +73,9 @@ namespace IngameScript
             // can be removed if not needed.
             try
             {
-                if (((UpdateType)((uint)UpdateType.Update100 & (uint)updateSource) == UpdateType.Update100))
+                if (((UpdateType)((uint)UpdateType.Update1 & (uint)updateSource) == UpdateType.Update1))
                 {
+                    _autopilot.Update(Runtime.LastRunTimeMs);
                     _autopilotMainControl.RefreshDisplay();
                     // Could possibly cause display to refresh twice if there is also an argument
                 }
@@ -86,7 +85,7 @@ namespace IngameScript
                     string[] arguments = argument.ToUpper().Split(' ');
                     if (arguments.Length > 3)
                     {
-                        Me.CustomData += $"Invalid Argument: [{argument}]\n";
+                        PrintToBuiltinDisplay($"Invalid Argument: [{argument}]\n");
                         //throw new ArgumentException("Invalid argument");
                     }
 
@@ -97,23 +96,14 @@ namespace IngameScript
                         {
                             throw new ArgumentException("Invalid button type");
                         }
-
-                        Me.CustomData = $"{Me.CustomData}\nType: {buttonType} AP Status: {_autopilot.ToggleAP}";
-                        Echo($"Input event: {buttonType}");
                         _autopilotMainControl.HandleInput(buttonType);
-                    }
-                    else if (arguments[0] == "APDATA")
-                    {
-                        Echo(argument.Length.ToString()); // arugment length
-                        ProcessAutopilotData(argument.Substring(arguments[0].Length));
                     }
                 }
             }
             catch (Exception ex)
             {
-                Echo("Exception occured. See CustomData.");
-                Me.CustomData = ex.ToString();
-                _autopilot.ToggleAP = false;
+                PrintToBuiltinDisplay(ex.ToString());
+                _autopilot.AutopilotEnabled = false;
             }
         }
 
@@ -122,10 +112,15 @@ namespace IngameScript
             IMyShipController shipController = GridTerminalSystem.GetBlockWithName(blockName) as IMyShipController;
             if (shipController == null)
             {
-                throw new Exception("GetAutopilot: received null block");
+                PrintError("GetAutopilot: received null block");
             }
-
-            Autopilot ap = new Autopilot(shipController);
+            List<IMyThrust> thrusters = new List<IMyThrust>();
+            List<IMyGyro> gyros = new List<IMyGyro>();
+            GridTerminalSystem.GetBlocksOfType<IMyThrust>(thrusters);
+            GridTerminalSystem.GetBlocksOfType<IMyGyro>(gyros);
+            
+            
+            Autopilot ap = new Autopilot(shipController, thrusters, gyros);
             return ap;
         }
 
@@ -135,13 +130,13 @@ namespace IngameScript
                 GridTerminalSystem.GetBlockWithName(blockName) as IMyTextSurfaceProvider;
             if (textSurfaceProvider == null)
             {
-                throw new Exception("GetDisplayController: textSurfaceProvider is null");
+                PrintError("GetDisplayController: textSurfaceProvider is null");
             }
 
             IMyTextSurface textSurface = textSurfaceProvider.GetSurface(0); // For main panel on inset button panel
             if (textSurface == null)
             {
-                throw new Exception("GetDisplayController: surf is null");
+                PrintError("GetDisplayController: surf is null");
             }
 
             DisplayController display = new DisplayController(textSurface);
@@ -154,17 +149,23 @@ namespace IngameScript
                 GridTerminalSystem.GetBlockWithName(blockName) as IMyTextSurfaceProvider;
             if (textSurfaceProvider == null)
             {
-                throw new Exception("GetButtonBar: textSurfaceProvider is null");
+                PrintError("GetButtonBar: textSurfaceProvider is null");
             }
 
             ButtonBar buttonBar = new ButtonBar(textSurfaceProvider);
             return buttonBar;
         }
 
-        private void ProcessAutopilotData(string serializedData)
+        private void PrintToBuiltinDisplay(string message, bool append = true)
         {
-            AutopilotData apData = AutopilotData.ParseAutopilotData(serializedData, _apBlock);
-            _autopilotMainControl.RefreshDisplayWithNewAPData(apData);
+            Me.GetSurface(0).WriteText($"{message.TrimEnd()}\n", append);
         }
+
+        private void PrintError(string message)
+        {
+            PrintToBuiltinDisplay(message);
+            throw new Exception(message);
+        }
+        
     }
 }

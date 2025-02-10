@@ -38,18 +38,19 @@ namespace IngameScript
             Editing
         }
         
-        private AutopilotData _apData = new AutopilotData();
+        private Autopilot _autopilot;
         private readonly DisplayController _display;
         private readonly ButtonBar _buttonBar;
         
         private bool editMode = false;
-        private Autopilot.APModule editType = Autopilot.APModule.None;
+        private Autopilot.Module editType = Autopilot.Module.None;
         private double editMulti = 1;
         private double editTemp = 0;
 
         
-        public AutopilotMainControl(DisplayController displayController, ButtonBar buttonBar)
+        public AutopilotMainControl(Autopilot autopilot, DisplayController displayController, ButtonBar buttonBar)
         {
+            _autopilot = autopilot;
             _display = displayController;
             _buttonBar = buttonBar;
             // Input setup is here in js, but needs to be setup manually in SE
@@ -62,7 +63,7 @@ namespace IngameScript
         {
             if (editMode)
             {
-                if (editType != Autopilot.APModule.None) return MenuState.Editing;
+                if (editType != Autopilot.Module.None) return MenuState.Editing;
                 return MenuState.EditSelection;
             }
             return MenuState.Main;
@@ -74,8 +75,9 @@ namespace IngameScript
         // Input handling
         public void HandleInput(ButtonType buttonType)
         {
-            if (buttonType == ButtonType.SB3) {
-                _apData.ToggleAP();
+            if (buttonType == ButtonType.SB3)
+            {
+                _autopilot.AutopilotEnabled = !_autopilot.AutopilotEnabled;
                 RefreshDisplay();
             }
             else {
@@ -99,19 +101,19 @@ namespace IngameScript
         {
             switch (buttonType) {
                 case ButtonType.BB1: // ALT
-                    _apData.ToggleModule(Autopilot.APModule.ALT);
+                    _autopilot.ToggleModule(Autopilot.Module.Altitude);
                     RefreshDisplay();
                     break;
                 case ButtonType.BB2: // HDG
-                    _apData.ToggleModule(Autopilot.APModule.HDG);
+                    _autopilot.ToggleModule(Autopilot.Module.Heading);
                     RefreshDisplay();
                     break;
                 case ButtonType.BB3: // SPD
-                    _apData.ToggleModule(Autopilot.APModule.SPD);
+                    _autopilot.ToggleModule(Autopilot.Module.Speed);
                     RefreshDisplay();
                     break;
                 case ButtonType.BB4: // VS
-                    _apData.ToggleModule(Autopilot.APModule.VS);
+                    _autopilot.ToggleModule(Autopilot.Module.VerticalSpeed);
                     RefreshDisplay();
                     break;
                 case ButtonType.SB2: // Edit
@@ -129,19 +131,19 @@ namespace IngameScript
         {
             switch (buttonType) {
                 case ButtonType.BB1: // ALT
-                    editType = Autopilot.APModule.ALT;
+                    editType = Autopilot.Module.Altitude;
                     SwitchToEditingState();
                     break;
                 case ButtonType.BB2: // HDG
-                    editType = Autopilot.APModule.HDG;
+                    editType = Autopilot.Module.Heading;
                     SwitchToEditingState();
                     break;
                 case ButtonType.BB3: // SPD
-                    editType = Autopilot.APModule.SPD;
+                    editType = Autopilot.Module.Speed;
                     SwitchToEditingState();
                     break;
                 case ButtonType.BB4: // VS
-                    editType = Autopilot.APModule.VS;
+                    editType = Autopilot.Module.VerticalSpeed;
                     SwitchToEditingState();
                     break;
                 case ButtonType.SB2: // Edit
@@ -161,7 +163,7 @@ namespace IngameScript
             switch (buttonType) {
                 case ButtonType.BB1: // --
                     editTemp = editTemp - (editMulti * 10);
-                    if (editType == Autopilot.APModule.VS)
+                    if (editType == Autopilot.Module.VerticalSpeed)
                     {
                         editTemp = Math.Max(editTemp, -100);
                     }
@@ -173,7 +175,7 @@ namespace IngameScript
                     break;
                 case ButtonType.BB2: // -
                     editTemp = editTemp - editMulti;
-                    if (editType == Autopilot.APModule.VS)
+                    if (editType == Autopilot.Module.VerticalSpeed)
                     {
                         editTemp = Math.Max(editTemp, -100);
                     }
@@ -185,7 +187,7 @@ namespace IngameScript
                     break;
                 case ButtonType.BB3: // +
                     editTemp = editTemp + editMulti;
-                    if (editType == Autopilot.APModule.VS || editType == Autopilot.APModule.SPD)
+                    if (editType == Autopilot.Module.VerticalSpeed || editType == Autopilot.Module.Speed)
                     {
                         editTemp = Math.Min(100, editTemp);
                     }
@@ -193,7 +195,7 @@ namespace IngameScript
                     break;
                 case ButtonType.BB4: // ++
                     editTemp = editTemp + (editMulti * 10);
-                    if (editType == Autopilot.APModule.VS || editType == Autopilot.APModule.SPD)
+                    if (editType == Autopilot.Module.VerticalSpeed || editType == Autopilot.Module.Speed)
                     {
                         editTemp = Math.Min(100, editTemp);
                     }
@@ -203,7 +205,7 @@ namespace IngameScript
                     SwitchToMainState();
                     break;
                 case ButtonType.SB1:
-                    _apData.SetTarget(editType, editTemp);
+                    _autopilot.SetTarget(editType, editTemp);
                     SwitchToMainState();
                     break;
                 default:
@@ -214,14 +216,14 @@ namespace IngameScript
         // State switching
         private void SwitchToMainState()
         {
-            editType = Autopilot.APModule.None;
+            editType = Autopilot.Module.None;
             editMode = false;
             RenameButtons(ButtonSchemeAPModules);
             RefreshDisplay();
         }
         private void SwitchToEditSelectionState()
         {
-            editType = Autopilot.APModule.None;
+            editType = Autopilot.Module.None;
             editMode = true;
             RenameButtons(ButtonSchemeAPModules);
             RefreshDisplay();
@@ -229,8 +231,8 @@ namespace IngameScript
         private void SwitchToEditingState()
         {
             editMulti = 1;
-            editTemp = _apData.GetTarget(editType);
-            if (editType == Autopilot.APModule.ALT)
+            editTemp = _autopilot.GetTarget(editType);
+            if (editType == Autopilot.Module.Altitude)
             {
                 editMulti = 100;
             }
@@ -266,8 +268,8 @@ namespace IngameScript
                 }
             };
             
-            string apEnabledString = _apData.AutopilotEnabled ? "AP ON       " : "AP OFF      ";
-            var functionsEnabled = $"{apEnabledString} {hideIfFalse(_apData.AltitudeEnabled, "ALT")} {hideIfFalse(_apData.HeadingEnabled, "HDG")} {hideIfFalse(_apData.SpeedEnabled, "SPD")} {hideIfFalse(_apData.VerticalSpeedEnabled, "VS")}";
+            string apEnabledString = _autopilot.AutopilotEnabled ? "AP ON       " : "AP OFF      ";
+            var functionsEnabled = $"{apEnabledString} {hideIfFalse(_autopilot.AltitudeEnabled, "ALT")} {hideIfFalse(_autopilot.HeadingEnabled, "HDG")} {hideIfFalse(_autopilot.SpeedEnabled, "SPD")} {hideIfFalse(_autopilot.VerticalSpeedEnabled, "VS")}";
             _display.SeekLine(0);
             _display.WriteLine($"{functionsEnabled}\n{new string('-', _display.Width)}");
         }
@@ -279,36 +281,40 @@ namespace IngameScript
         }
         private void DrawAutopilotReadout()
         {
-            string altitudeReal = Math.Round(_apData.AltitudeCurrent).ToString().PadLeft(5);
-            string altitudeTarget = _apData.AltitudeTarget.ToString().PadLeft(5);
+            string altitudeReal = Math.Round(_autopilot.CurrentAltitude).ToString().PadLeft(5);
+            string altitudeTarget = _autopilot.AltitudeTarget.ToString().PadLeft(5);
             var altitudeError = "N/A".PadLeft(6);
-            if (_apData.AltitudeEnabled)
-                altitudeError = Math.Round(_apData.AltitudeError).ToString()
+            if (_autopilot.AltitudeEnabled)
+                altitudeError = Math.Round(_autopilot.AltitudeError).ToString()
                     .PadLeft(6);
 
-            string headingReal = (Math.Round(_apData.HeadingCurrent)).ToString().PadLeft(3);
-            string headingTarget = _apData.HeadingTarget.ToString().PadLeft(5);
+            string headingReal = (Math.Round(_autopilot.CurrentHeading+0.2f)).ToString().PadLeft(3);
+            string headingTarget = _autopilot.HeadingTarget.ToString().PadLeft(5);
             string headingError = "N/A".PadLeft(6);
-            if (_apData.HeadingEnabled)
-                headingError = Math.Round(_apData.HeadingError).ToString()
+            if (_autopilot.HeadingEnabled)
+                headingError = Math.Round(_autopilot.HeadingError).ToString()
                     .PadLeft(6);
 
-            string hSpeedReal = (Math.Round(_apData.SpeedCurrent)).ToString().PadLeft(3);
-            string hSpeedTarget = _apData.SpeedTarget.ToString().PadLeft(5);
+            string hSpeedReal = (Math.Round(_autopilot.CurrentSpeed)).ToString().PadLeft(3);
+            string hSpeedTarget = _autopilot.SpeedTarget.ToString().PadLeft(5);
             string hSpeedError = "N/A".PadLeft(6);
-            if (_apData.SpeedEnabled)
-                hSpeedError = Math.Round(_apData.SpeedError).ToString()
+            if (_autopilot.SpeedEnabled)
+                hSpeedError = Math.Round(_autopilot.SpeedError).ToString()
                     .PadLeft(6);
 
-            string vSpeedReal = (Math.Round(_apData.VerticalSpeedCurrent)).ToString().PadLeft(3);
-            string vSpeedTarget = _apData.VerticalSpeedTarget.ToString().PadLeft(5);
+            string vSpeedReal = (Math.Round(_autopilot.CurrentVerticalSpeed)).ToString().PadLeft(3);
+            string vSpeedTarget = _autopilot.VerticalSpeedTarget.ToString().PadLeft(5);
             string vSpeedError = "N/A".PadLeft(6);
-            if (_apData.VerticalSpeedEnabled)
-                vSpeedError = Math.Round(_apData.VerticalSpeedError).ToString()
+            if (_autopilot.VerticalSpeedEnabled)
+                vSpeedError = Math.Round(_autopilot.VerticalSpeedError).ToString()
                     .PadLeft(6);
 
-            string pitchReal = Math.Round(_apData.PitchCurrent).ToString().PadLeft(4);
-            string rollReal = Math.Round(_apData.RollCurrent).ToString().PadLeft(4);
+            string pitchReal = Math.Round(_autopilot.CurrentPitch, 1).ToString();
+            string rollReal = Math.Round(_autopilot.CurrentRoll, 1).ToString();
+            if (!pitchReal.Contains('.')) pitchReal += ".0";
+            if (!rollReal.Contains('.')) rollReal += ".0";
+            pitchReal = pitchReal.PadLeft(5);
+            rollReal = rollReal.PadLeft(5);
             
             _display.SeekLine(2);
             _display.WriteLine("      Real  Error  Goal");
@@ -316,7 +322,7 @@ namespace IngameScript
             _display.WriteLine($"Hdg:   {headingReal} {headingError} {headingTarget} °");
             _display.WriteLine($"Spd:   {hSpeedReal} {hSpeedError} {hSpeedTarget} m/s");
             _display.WriteLine($" Vs:   {vSpeedReal} {vSpeedError} {vSpeedTarget} m/s");
-            _display.WriteLine($"Pitch: {pitchReal}° {rollReal}°");
+            _display.WriteLine($"Pitch: {pitchReal}° Roll: {rollReal}°");
         }
         public void RefreshDisplay()
         {
@@ -327,23 +333,17 @@ namespace IngameScript
 
             if (menuState == MenuState.EditSelection || menuState == MenuState.Editing)
             {
-                string editingTooltop = (editType != Autopilot.APModule.None) ? editType.ToString() : "___";
+                string editingTooltop = (editType != Autopilot.Module.None) ? editType.ToString() : "___";
                 _display.SeekLine(8);
                 _display.WriteLine($"Edit Target: {editingTooltop}".PadRight(_display.Width));
             }
             if (menuState == MenuState.Editing) {
-                _display.WriteLine($"Current: {_apData.GetTarget(editType).ToString().PadRight(6)} {AutopilotSuffixes[(int) editType]}");
+                _display.WriteLine($"Current: {_autopilot.GetTarget(editType).ToString().PadRight(6)} {AutopilotSuffixes[(int) editType]}");
                 _display.WriteLine($"    New: {editTemp.ToString().PadRight(6)} {AutopilotSuffixes[(int) editType]}");
             }
 
             DrawControls(menuState);
             _display.FlipDisplay();
-        }
-
-        public void RefreshDisplayWithNewAPData(AutopilotData autopilotData)
-        {
-            _apData = autopilotData;
-            RefreshDisplay();
         }
     }
 }

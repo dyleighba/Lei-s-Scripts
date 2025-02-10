@@ -12,8 +12,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamlineServer", "Streaml
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Streamline", "Streamline\Streamline.csproj", "{DEDE8739-A46F-4D4D-9BD4-08C30C26666A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamlineAP", "StreamlineAP\StreamlineAP.csproj", "{859974D5-3381-49C3-A424-9562CA9F511E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,15 +21,12 @@ Global
 		{A79EE335-B801-42CE-85B6-6830379028E4}.Debug|x64.ActiveCfg = Debug|x64
 		{A79EE335-B801-42CE-85B6-6830379028E4}.Release|x64.ActiveCfg = Release|x64
 		{A79EE335-B801-42CE-85B6-6830379028E4}.Release|x64.Build.0 = Release|x64
-		{A79EE335-B801-42CE-85B6-6830379028E4}.Debug|x64.Build.0 = Debug|x64
 		{579F0515-8099-4509-9C2E-3F5A43D516BD}.Debug|x64.ActiveCfg = Debug|x64
 		{579F0515-8099-4509-9C2E-3F5A43D516BD}.Release|x64.ActiveCfg = Release|x64
 		{579F0515-8099-4509-9C2E-3F5A43D516BD}.Release|x64.Build.0 = Release|x64
-		{579F0515-8099-4509-9C2E-3F5A43D516BD}.Debug|x64.Build.0 = Debug|x64
 		{3D1088ED-067A-4F81-A99C-A750F01FF5C6}.Debug|x64.ActiveCfg = Debug|x64
 		{3D1088ED-067A-4F81-A99C-A750F01FF5C6}.Release|x64.ActiveCfg = Release|x64
 		{3D1088ED-067A-4F81-A99C-A750F01FF5C6}.Release|x64.Build.0 = Release|x64
-		{3D1088ED-067A-4F81-A99C-A750F01FF5C6}.Debug|x64.Build.0 = Debug|x64
 		{7457B2A7-A8C9-49F9-8CBE-D985720ECE53}.Debug|x64.ActiveCfg = Debug|x64
 		{7457B2A7-A8C9-49F9-8CBE-D985720ECE53}.Release|x64.ActiveCfg = Release|x64
 		{7457B2A7-A8C9-49F9-8CBE-D985720ECE53}.Release|x64.Build.0 = Release|x64
@@ -39,14 +34,9 @@ Global
 		{4CEFCB7E-0540-4030-B58F-CBF4AE07CAE1}.Debug|x64.ActiveCfg = Debug|x64
 		{4CEFCB7E-0540-4030-B58F-CBF4AE07CAE1}.Release|x64.ActiveCfg = Release|x64
 		{4CEFCB7E-0540-4030-B58F-CBF4AE07CAE1}.Release|x64.Build.0 = Release|x64
-		{4CEFCB7E-0540-4030-B58F-CBF4AE07CAE1}.Debug|x64.Build.0 = Debug|x64
 		{DEDE8739-A46F-4D4D-9BD4-08C30C26666A}.Debug|x64.ActiveCfg = Debug|x64
 		{DEDE8739-A46F-4D4D-9BD4-08C30C26666A}.Debug|x64.Build.0 = Debug|x64
 		{DEDE8739-A46F-4D4D-9BD4-08C30C26666A}.Release|x64.ActiveCfg = Release|x64
 		{DEDE8739-A46F-4D4D-9BD4-08C30C26666A}.Release|x64.Build.0 = Release|x64
-		{859974D5-3381-49C3-A424-9562CA9F511E}.Debug|x64.ActiveCfg = Debug|x64
-		{859974D5-3381-49C3-A424-9562CA9F511E}.Debug|x64.Build.0 = Debug|x64
-		{859974D5-3381-49C3-A424-9562CA9F511E}.Release|x64.ActiveCfg = Release|x64
-		{859974D5-3381-49C3-A424-9562CA9F511E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 EndGlobal

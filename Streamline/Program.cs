@@ -46,6 +46,8 @@ namespace IngameScript
             _displayController = GetDisplayController(MenuDisplayBlockName);
             _buttonBar = GetButtonBar(ButtonBarBlockName);
             _autopilotMainControl = new AutopilotMainControl(_autopilot, _displayController, _buttonBar);
+            
+            PrintToBuiltinDisplay("Streamline\n\n", false);
         }
 
         public void Save()
@@ -83,7 +85,7 @@ namespace IngameScript
                     string[] arguments = argument.ToUpper().Split(' ');
                     if (arguments.Length > 3)
                     {
-                        Me.CustomData += $"Invalid Argument: [{argument}]\n";
+                        PrintToBuiltinDisplay($"Invalid Argument: [{argument}]\n");
                         //throw new ArgumentException("Invalid argument");
                     }
 
@@ -94,17 +96,13 @@ namespace IngameScript
                         {
                             throw new ArgumentException("Invalid button type");
                         }
-
-                        Me.CustomData = $"{Me.CustomData}\nType: {buttonType} AP Status: {_autopilot.AutopilotEnabled}";
-                        Echo($"Input event: {buttonType}");
                         _autopilotMainControl.HandleInput(buttonType);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Echo("Exception occured. See CustomData.");
-                Me.CustomData = ex.ToString();
+                PrintToBuiltinDisplay(ex.ToString());
                 _autopilot.AutopilotEnabled = false;
             }
         }
@@ -114,7 +112,7 @@ namespace IngameScript
             IMyShipController shipController = GridTerminalSystem.GetBlockWithName(blockName) as IMyShipController;
             if (shipController == null)
             {
-                throw new Exception("GetAutopilot: received null block");
+                PrintError("GetAutopilot: received null block");
             }
             List<IMyThrust> thrusters = new List<IMyThrust>();
             List<IMyGyro> gyros = new List<IMyGyro>();
@@ -132,13 +130,13 @@ namespace IngameScript
                 GridTerminalSystem.GetBlockWithName(blockName) as IMyTextSurfaceProvider;
             if (textSurfaceProvider == null)
             {
-                throw new Exception("GetDisplayController: textSurfaceProvider is null");
+                PrintError("GetDisplayController: textSurfaceProvider is null");
             }
 
             IMyTextSurface textSurface = textSurfaceProvider.GetSurface(0); // For main panel on inset button panel
             if (textSurface == null)
             {
-                throw new Exception("GetDisplayController: surf is null");
+                PrintError("GetDisplayController: surf is null");
             }
 
             DisplayController display = new DisplayController(textSurface);
@@ -151,11 +149,23 @@ namespace IngameScript
                 GridTerminalSystem.GetBlockWithName(blockName) as IMyTextSurfaceProvider;
             if (textSurfaceProvider == null)
             {
-                throw new Exception("GetButtonBar: textSurfaceProvider is null");
+                PrintError("GetButtonBar: textSurfaceProvider is null");
             }
 
             ButtonBar buttonBar = new ButtonBar(textSurfaceProvider);
             return buttonBar;
         }
+
+        private void PrintToBuiltinDisplay(string message, bool append = true)
+        {
+            Me.GetSurface(0).WriteText($"{message.TrimEnd()}\n", append);
+        }
+
+        private void PrintError(string message)
+        {
+            PrintToBuiltinDisplay(message);
+            throw new Exception(message);
+        }
+        
     }
 }

@@ -78,11 +78,11 @@ namespace IngameScript
 
         public void ReleaseAllControlLocks()
         {
-            _gyros.GyroOverride = false;
             _gyros.Yaw = 0;
             _gyros.Pitch = 0;
             _gyros.Roll = 0;
             _gyros.UpdateGyroRotation();
+            _gyros.GyroOverride = false;
 
             ReleaseThrusterControlLocks();
             _autopilot.DampenersOverride = true;

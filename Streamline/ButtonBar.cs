@@ -27,7 +27,7 @@ namespace IngameScript
                 buttons.Add(textSurface);
                 textSurface.Font = "Monospace";
                 textSurface.ContentType = ContentType.TEXT_AND_IMAGE;
-                textSurface.FontSize = 6.00f;
+                textSurface.FontSize = 4.00f;
                 textSurface.TextPadding = 12f;
                 textSurface.Alignment = TextAlignment.CENTER;
                 textSurface.BackgroundColor = new Color(0.03f, 0.03f, 0.03f); // Dull grey for screen effect

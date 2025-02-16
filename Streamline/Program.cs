@@ -1,4 +1,4 @@
-﻿using Sandbox.Game.EntityComponents;
+using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -115,12 +115,10 @@ namespace IngameScript
                 PrintError("GetAutopilot: received null block");
             }
             List<IMyThrust> thrusters = new List<IMyThrust>();
-            List<IMyGyro> gyros = new List<IMyGyro>();
             GridTerminalSystem.GetBlocksOfType<IMyThrust>(thrusters);
-            GridTerminalSystem.GetBlocksOfType<IMyGyro>(gyros);
+            ShipGyroController gyroController = new ShipGyroController(GridTerminalSystem);
             
-            
-            Autopilot ap = new Autopilot(shipController, thrusters, gyros);
+            Autopilot ap = new Autopilot(shipController, thrusters, gyroController);
             return ap;
         }
 

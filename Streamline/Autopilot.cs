@@ -46,7 +46,7 @@ namespace IngameScript
         public double HeadingTarget;
         public double SpeedTarget; // todo make horizontal speed
 
-        public Autopilot(IMyShipController shipController, List<IMyThrust> thrusters, List<IMyGyro> gyros)
+        public Autopilot(IMyShipController shipController, List<IMyThrust> thrusters, ShipGyroController gyros)
         {
             _shipController = shipController;
             _autopilotOperations = new AutopilotOperations(this, thrusters, gyros);
@@ -226,6 +226,16 @@ namespace IngameScript
             get
             {
                 return _shipController.GetNaturalGravity().Normalized();
+            }
+        }
+
+        public Quaternion Rotation
+        {
+            get
+            {
+                Quaternion rotation;
+                _shipController.Orientation.GetQuaternion(out rotation);
+                return rotation;
             }
         }
 

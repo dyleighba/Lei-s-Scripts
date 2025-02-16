@@ -26,9 +26,9 @@ namespace IngameScript
         
         private List<IMyThrust> _thrusters;
         private List<IMyThrust> _gravityFightingThrusters = new List<IMyThrust>();
-        private List<IMyGyro> _gyros;
+        private ShipGyroController _gyros;
         
-        public AutopilotOperations(Autopilot autopilot, List<IMyThrust> thrusters, List<IMyGyro> gyros)
+        public AutopilotOperations(Autopilot autopilot, List<IMyThrust> thrusters, ShipGyroController gyros)
         {
             _autopilot = autopilot;
             _thrusters = thrusters;
@@ -38,10 +38,11 @@ namespace IngameScript
                 throw new Exception("AutopilotOperations requires at least one thruster");
             }
 
-            if (_gyros == null || _gyros.Count < 1)
+            if (_gyros == null)
             {
-                throw new Exception("AutopilotOperations requires at least one gyro");
+                throw new Exception("AutopilotOperations requires a gyro controller");
             }
+            
 
             _rollController = new PDController(1.0, 2.0);
             _pitchController = new PDController(1.0, 2.0);
@@ -58,6 +59,9 @@ namespace IngameScript
                 ReleaseAllControlLocks();
                 return;
             };
+            _gyros.Yaw = 0;
+            _gyros.Pitch = 0;
+            _gyros.Roll = 0;
             CorrectRoll(deltaTime, !_autopilot.AutopilotEnabled);
             CorrectPitch(deltaTime, !_autopilot.AutopilotEnabled);
                 
@@ -68,14 +72,17 @@ namespace IngameScript
             CorrectHeading(deltaTime, !_autopilot.AutopilotEnabled);
             CorrectSpeed(deltaTime, !_autopilot.AutopilotEnabled);
             CorrectVerticalSpeed(deltaTime, !_autopilot.AutopilotEnabled);
+            _gyros.UpdateGyroRotation();
+            
         }
 
         public void ReleaseAllControlLocks()
         {
-            foreach (IMyGyro gyro in _gyros)
-            {
-                gyro.GyroOverride = false;
-            }
+            _gyros.GyroOverride = false;
+            _gyros.Yaw = 0;
+            _gyros.Pitch = 0;
+            _gyros.Roll = 0;
+            _gyros.UpdateGyroRotation();
 
             ReleaseThrusterControlLocks();
             _autopilot.DampenersOverride = true;
@@ -115,11 +122,8 @@ namespace IngameScript
             }
             double correction = _rollController.Compute(0, desiredError, deltaTime);
             // do gyro stuff
-            foreach (var gyro in _gyros)
-            {
-                gyro.GyroOverride = true;
-                gyro.Roll = (float)correction;
-            }
+            _gyros.GyroOverride = true;
+            _gyros.Roll = (float)correction;
         }
 
         private void CorrectPitch(double deltaTime, bool forceOff = false)
@@ -131,12 +135,8 @@ namespace IngameScript
             }
             double correction = _pitchController.Compute(0, -_autopilot.CurrentPitch, deltaTime);
             // do gyro stuff
-            foreach (var gyro in _gyros)
-            {
-                gyro.GyroOverride = true;
-                gyro.Pitch = (float)correction;
-                gyro.Yaw = -(float)correction;
-            }
+            _gyros.GyroOverride = true;
+            _gyros.Pitch = -(float)correction;
         }
         
         private void CorrectHeading(double deltaTime, bool forceOff = false)
@@ -161,12 +161,8 @@ namespace IngameScript
             }
             double correction = _headingController.Compute(_autopilot.HeadingTarget, _autopilot.HeadingError, deltaTime);
             // do gyro stuff
-            foreach (var gyro in _gyros)
-            {
-                gyro.GyroOverride = true;
-                gyro.Yaw = gyro.Yaw + (float)correction;
-                gyro.Pitch = gyro.Pitch + (float)correction;
-            }
+            _gyros.GyroOverride = true;
+            _gyros.Yaw = (float)correction;
         }
 
         private void CorrectAltitude(double deltaTime, bool forceOff = false)
@@ -175,9 +171,16 @@ namespace IngameScript
             if (forceOff || !_autopilot.AltitudeEnabled || !_autopilot.VerticalSpeedEnabled)
             {
                 _altitudeController.Reset();
+                // TODO don't run if possible
                 return;
             }
-            if (_autopilot.VerticalSpeedTarget < 0) return;
+            
+            // let the game handle it once settled to stop oscillation
+            if (Math.Round(_autopilot.AltitudeError) == 0)
+            {
+                _derivedVerticalSpeedTarget = 0;
+                return;
+            }
             double correction = _altitudeController.Compute(0, -_autopilot.AltitudeError, deltaTime);
             double slowDownDistance = (Math.Abs(_autopilot.CurrentVerticalSpeed) / 30) * 100; // Missile barge quick fix
             double realVerticalSpeedTarget = _autopilot.VerticalSpeedTarget;
@@ -217,7 +220,16 @@ namespace IngameScript
             {
                 desiredError = _autopilot.CurrentVerticalSpeed - _derivedVerticalSpeedTarget;
             }
-
+            
+            // let the game handle it once settled to stop oscillation
+            if (Math.Abs(desiredError) < 0.1)
+            {
+                foreach (var thruster in _gravityFightingThrusters)
+                {
+                    thruster.ThrustOverridePercentage = 0;
+                }
+                return;
+            };
 
             float thrustRatio = 0;
             //if (!(desiredError < 1.0f && _autopilot.CurrentVerticalSpeed < 1.0f))

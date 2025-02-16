@@ -64,8 +64,12 @@ namespace IngameScript
             _gyros.Roll = 0;
             CorrectRoll(deltaTime, !_autopilot.AutopilotEnabled);
             CorrectPitch(deltaTime, !_autopilot.AutopilotEnabled);
-                
-            if (Math.Abs(_autopilot.CurrentRoll) + Math.Abs(_autopilot.CurrentPitch) > 10) return;
+
+            if (Math.Abs(_autopilot.CurrentRoll) + Math.Abs(_autopilot.CurrentPitch) > 10)
+            {
+                _gyros.UpdateGyroRotation();
+                return;
+            }
             PopulateDownwardsThrustersIfNeeded();
             
             CorrectAltitude(deltaTime, !_autopilot.AutopilotEnabled);

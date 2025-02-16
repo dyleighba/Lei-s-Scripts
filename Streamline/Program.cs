@@ -117,7 +117,11 @@ namespace IngameScript
             List<IMyThrust> thrusters = new List<IMyThrust>();
             GridTerminalSystem.GetBlocksOfType<IMyThrust>(thrusters);
             ShipGyroController gyroController = new ShipGyroController(GridTerminalSystem);
-            
+            gyroController.Pitch = 0;
+            gyroController.Yaw = 0;
+            gyroController.Roll = 0;
+            gyroController.UpdateGyroRotation();
+            gyroController.GyroOverride = false;
             Autopilot ap = new Autopilot(shipController, thrusters, gyroController);
             return ap;
         }

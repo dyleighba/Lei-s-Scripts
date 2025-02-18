@@ -211,15 +211,20 @@ namespace IngameScript
                     return 0;
                 gravity.Normalize();
 
-                Vector3D shipRight = _shipController.WorldMatrix.Right;
+                Vector3D shipForward = _shipController.WorldMatrix.Forward;
                 Vector3D shipUp = _shipController.WorldMatrix.Up;
-    
-                // Get the roll angle by projecting the ship's right vector onto the gravity plane
-                double roll = Math.Asin(MathHelper.Clamp(Vector3D.Dot(shipRight, gravity), -1.0, 1.0));
-    
-                return -MathHelper.ToDegrees(roll); // Convert to degrees for easier use
+
+                // Define a corrected right vector perpendicular to gravity
+                Vector3D correctedRight = Vector3D.Cross(gravity, shipForward);
+                correctedRight.Normalize();
+
+                // Flip shipUp to correct orientation
+                double roll = Math.Atan2(Vector3D.Dot(-shipUp, correctedRight), Vector3D.Dot(-shipUp, gravity));
+
+                return -MathHelper.ToDegrees(roll); // Convert to degrees
             }
         }
+
 
         public Vector3D Gravity
         {
